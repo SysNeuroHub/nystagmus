@@ -1,0 +1,19 @@
+params.paths = '/home/marmolab/data/2022/07/30/';
+
+
+% % unidirectional stimuli. without glasses
+% nystagmus_gabor('sameDir');
+params.files = 'sameDir.pursuit2D.100848.mat';
+
+%% unidirectional stimuli. red/blue glasses 
+%nystagmus_gabor('sameDir_glasses','phaseSpeed',2)
+% params.files = 'sameDir_glasses.pursuit2D.102145.mat';
+
+d = marmodata.mdbase('path',params.paths,'file',params.files,'loadArgs',{'loadEye',true});
+
+
+tiledlayout('flow');
+for itr = 1:d.numTrials
+    nexttile;
+    plot(d.eye(itr).t, d.eye(itr).x, d.eye(itr).t, d.eye(itr).y);
+end

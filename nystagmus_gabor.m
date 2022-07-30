@@ -77,7 +77,7 @@ p.addParameter('tolerance',6,@(x) validateattributes(x,{'numeric'},{'scalar','no
 
 %for gabor patch
 p.addParameter('contrast',1);
-p.addParameter('orientation',0);
+p.addParameter('orientation',[0 0]);
 p.addParameter('frequency',.2);
 p.addParameter('phaseSpeed',4);
 p.addParameter('sigma',5);%should be radius but something is not right
@@ -142,7 +142,7 @@ for ii = 1:nrConds
     % fm.mask = 'GAUSS';
     fm{ii}.width = 2*max(args.sigma); %WEIRDLY SMALL ON SCREEN
     fm{ii}.height = fm{ii}.width;
-    fm{ii}.mask = 'SQUARE';%'CIRCLE';
+    fm{ii}.mask = 'SQUARE';%'CIRCLE';%
     
     fm{ii}.X = 0;%'@traj.X';
     fm{ii}.Y = 0;%'@traj.Y';
@@ -161,8 +161,8 @@ for ii = 1:nrConds
 end
 fm{1}.color = [0 0 1 .5];
 fm{2}.color = [1 0 0 .5];
-fm{1}.orientation = 0;
-fm{2}.orientation = 180;
+fm{1}.orientation = args.orientation(1);
+fm{2}.orientation = args.orientation(2);
     
 %% ========== Add required behaviours =========
 %Subject's 2AFC response
