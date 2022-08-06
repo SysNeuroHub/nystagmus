@@ -130,7 +130,7 @@ f.Y = 0;%'@traj.Y';
 % draw moving fixation target
 tDur = args.tDur; % (ms) applies to fixation target and trajectory
 
-%c.addProperty('tPreBlank',args.tPreBlank);
+c.addProperty('tPreBlank',args.tPreBlank);
 
 nrConds = 2;
 fm = cell(nrConds,1);
@@ -149,7 +149,7 @@ for ii = 1:nrConds
     
     fm{ii}.X = 0;%'@traj.X';
     fm{ii}.Y = 0;%'@traj.Y';
-    fm{ii}.on = args.tPreBlank(ii);%'@fix.stopTime';%'@traj.startTime'; % was .on
+    fm{ii}.on = '@fix.stopTime + @tPreBlank(ii)';%'@traj.startTime'; % was .on
     fm{ii}.duration = tDur - args.tPreBlank(ii);
     fm{ii}.phaseSpeed = args.phaseSpeed;%
     fm{ii}.frequency = args.frequency;
