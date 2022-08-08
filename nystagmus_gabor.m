@@ -130,7 +130,7 @@ f.Y = 0;%'@traj.Y';
 % draw moving fixation target
 tDur = args.tDur; % (ms) applies to fixation target and trajectory
 
-%c.addProperty('tPreBlank',args.tPreBlank);
+ c.addProperty('tPreBlank',args.tPreBlank);
 
 nrConds = 2;
 fm = cell(nrConds,1);
@@ -147,26 +147,24 @@ for ii = 1:nrConds
     fm{ii}.height = fm{ii}.width;
     fm{ii}.mask = 'SQUARE';%'CIRCLE';%
     
-    fm{ii}.X = 0;%'@traj.X';
-    fm{ii}.Y = 0;%'@traj.Y';
-    fm{ii}.on = args.tPreBlank(ii);%'@fix.stopTime';%'@traj.startTime'; % was .on
-    fm{ii}.duration = tDur - args.tPreBlank(ii);
+    fm{ii}.X = 0;
+    fm{ii}.Y = 0;
+    fm{ii}.addProperty('tPreBlank', args.tPreBlank(ii));    
+    fm{ii}.duration = tDur - args.tPreBlank(ii); %TO BE REPLACED WITH c.trialDuration
     fm{ii}.phaseSpeed = args.phaseSpeed;%
     fm{ii}.frequency = args.frequency;
     fm{ii}.contrast = args.contrast;
-    %fm{ii}.spd = args.spd;
     fm{ii}.flickerMode = 'none';
     fm{ii}.flickerFrequency = 0;%args.flickerFrequency;
     fm{ii}.square = true;
-    %fm.multiGaborsOriOffset = [0 90];
-    %fm.multiGaborsN = 2;
-    %fm.multiGaborsOriRand = false;
 end
 fm{1}.color = [0 0 1 .5];
 fm{2}.color = [1 0 0 .5];
 fm{1}.orientation = args.orientation(1);
 fm{2}.orientation = args.orientation(2);
-    
+%fm{1}.on = '@fix.stopTime + gabor1.tPreBlank';
+%fm{2}.on = '@fix.stopTime + gabor2.tPreBlank';
+        
 %% ========== Add required behaviours =========
 %Subject's 2AFC response
 k = behaviors.keyResponse(c,'choice');
@@ -216,6 +214,21 @@ k.successEndsTrial  = true; %false;
 %  Specify experimental conditions
 % For threshold estimation, we'd just vary speed
 myDesign=design('myFac');                      %Type "help neurostim/design" for more options.
+
+%% factorization
+facOutList = {'on'}; % frequency = spatial frequency
+facInList = {'tPreBlank'};%omitted sigma
+
+%produces 2 x 2 conditions
+for a = 1:length(facInList)
+    myDesign.(sprintf('fac%d',1)).gabor1.(facOutList{a}) = args.(facInList{a});
+    myDesign.(sprintf('fac%d',2)).gabor2.(facOutList{a}) = args.(facInList{a});
+end
+
+% for a = 1:length(facInList)
+%     myDesign.(sprintf('fac%d',1)).gabor1.(facOutList{a}) = '@fix.stopTime + cic.tPreBlank';
+%     myDesign.(sprintf('fac%d',2)).gabor2.(facOutList{a}) = '@fix.stopTime + cic.tPreBlank';
+% end
 
 myDesign.retry = 'RANDOM'; %'IMMEDIATE' or 'IGNORE';
 myDesign.maxRetry = 10;  % Each condition will be retried up to this many times. 
