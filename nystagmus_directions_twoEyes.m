@@ -77,7 +77,7 @@ p.addParameter('tolerance',6,@(x) validateattributes(x,{'numeric'},{'scalar','no
 
 %for gabor patch
 p.addParameter('contrast',1);
-p.addParameter('orientation',[0 0]);
+p.addParameter('ori1List',[0 0]);
 p.addParameter('frequency',.2);
 p.addParameter('phaseSpeed',4);
 p.addParameter('sigma',5);%should be radius but something is not right
@@ -130,7 +130,7 @@ f.Y = 0;%'@traj.Y';
 % draw moving fixation target
 tDur = args.tDur; % (ms) applies to fixation target and trajectory
 
-c.addProperty('tPreBlank',args.tPreBlank);
+%c.addProperty('tPreBlank',args.tPreBlank);
 
 nrConds = 2;
 fm = cell(nrConds,1);
@@ -149,7 +149,7 @@ for ii = 1:nrConds
     
     fm{ii}.X = 0;%'@traj.X';
     fm{ii}.Y = 0;%'@traj.Y';
-    fm{ii}.on = '@fix.stopTime + @tPreBlank(ii)';%'@traj.startTime'; % was .on
+    fm{ii}.on = args.tPreBlank(ii);%'@fix.stopTime';%'@traj.startTime'; % was .on
     fm{ii}.duration = tDur - args.tPreBlank(ii);
     fm{ii}.phaseSpeed = args.phaseSpeed;%
     fm{ii}.frequency = args.frequency;
@@ -164,8 +164,8 @@ for ii = 1:nrConds
 end
 fm{1}.color = [0 0 1 .5];
 fm{2}.color = [1 0 0 .5];
-fm{1}.orientation = args.orientation(1);
-fm{2}.orientation = args.orientation(2);
+fm{1}.orientation = 0;%args.orientation(1);
+fm{2}.orientation = 0;%args.orientation(2);
     
 %% ========== Add required behaviours =========
 %Subject's 2AFC response
@@ -216,6 +216,14 @@ k.successEndsTrial  = true; %false;
 %  Specify experimental conditions
 % For threshold estimation, we'd just vary speed
 myDesign=design('myFac');                      %Type "help neurostim/design" for more options.
+
+
+facOutList = {'orientation'}; % frequency = spatial frequency
+facInList = {'ori1List'};
+for a = 1:length(facInList)
+    myDesign.(sprintf('fac%d',a)).gabor1.(facOutList{a}) = args.(facInList{a});
+    myDesign.(sprintf('fac%d',a)).gabor2.(facOutList{a}) = args.(facInList{a});
+end
 
 myDesign.retry = 'RANDOM'; %'IMMEDIATE' or 'IGNORE';
 myDesign.maxRetry = 10;  % Each condition will be retried up to this many times. 
