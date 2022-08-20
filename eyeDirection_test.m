@@ -76,14 +76,13 @@ params.paths = '/home/marmolab/data/2022/07/30/';
 %nystagmus_gabor('biDir','phaseSpeed',10, 'orientation',[0 180], 'sigma',2, 'frequency',.5,'tDur',2e4);
 params.files = 'biDir-oneEye.pursuit2D.151834.mat';
 
-
 d = marmodata.mdbase('path',params.paths,'file',params.files,'loadArgs',{'loadEye',true});
 
 
 tiledlayout('flow');
 for itr = 1:d.numTrials
     nexttile;
-    tidx = d.eye(itr).t< 20; 
+    tidx = d.eye(itr).t< ; 
     plot(d.eye(itr).t(tidx), d.eye(itr).x(tidx), d.eye(itr).t(tidx), d.eye(itr).y(tidx));
 end
 xlabel('time [s]')
