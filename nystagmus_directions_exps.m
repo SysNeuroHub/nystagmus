@@ -12,7 +12,7 @@ deg = 0:15:180;
 
 
 %% analysis
-params.paths = '/home/marmolab/data/2022/08/20/';
+params.paths = '\\storage.erc.monash.edu\shares\R-MNHS-Syncitium\Shared\Daisuke\recording\nystagmus_20220820';%'/home/marmolab/data/2022/08/20/';
 params.files = 'twoEyes.pursuit2D.113116.mat';
 %params.files = 'oneEye.pursuit2D.113617.mat';
 
@@ -40,7 +40,46 @@ legend('x','y');
 saveas(gcf,fullfile(params.paths,['1d_' params.files(1:end-4) '.png']));
 
 %% remove saccades then show traces in x-y 2D space
-test = d.eye.findSaccades;
-test = d.eye.rmSaccades;
+ey_rmSaccades = [];
+for itr = 1:d.numTrials
+    eye_rmSaccades(itr) = d.eye(itr).rmSaccades;
+    close
+end
 
-%% check if the eye movement direction matches with the stimulus direction
+figure('position',[0 0 1920 1080]);
+for itr = 1:d.numTrials
+    if ~successTr(itr)
+        continue;
+    end
+    ax(itr)=subplot(3,5,find(deg == stimDir(itr)));
+    tidx = find((eye_rmSaccades(itr).t > 0) & (eye_rmSaccades(itr).t < get(c.gabor1.prms.duration,'atTrialTime',inf,'trial',itr)*1e-3)); 
+    plot(eye_rmSaccades(itr).t(tidx), eye_rmSaccades(itr).x(tidx), eye_rmSaccades(itr).t(tidx), eye_rmSaccades(itr).y(tidx));
+    title([num2str(stimDir(itr)) ' deg']);
+end
+linkaxes(ax(:));
+xlabel('time [s]')
+ylabel('eye position [deg]')
+legend('x','y');
+saveas(gcf,fullfile(params.paths,['1d_' params.files(1:end-4) '_rmSaccades.png']));
+
+
+%% figure2: x-y 2D space
+figure('position',[0 0 1920 1080]);
+for itr = 1:d.numTrials
+    if ~successTr(itr)
+        continue;
+    end
+    ax(itr)=subplot(3,5,find(deg == stimDir(itr)));
+    tidx = find((eye_rmSaccades(itr).t > 0) & (eye_rmSaccades(itr).t < get(c.gabor1.prms.duration,'atTrialTime',inf,'trial',itr)*1e-3)); 
+    plot(eye_rmSaccades(itr).x(tidx) - eye_rmSaccades(itr).x(tidx(1)), ...
+        eye_rmSaccades(itr).y(tidx) - eye_rmSaccades(itr).y(tidx(1)));
+    hold on
+    quiver(0,0,-10*sin(pi/180*stimDir(itr)), 10*cos(pi/180*stimDir(itr)));
+    title([num2str(stimDir(itr)) ' deg']);
+end
+xlabel('x after removal of saccade [deg]')
+ylabel('x after removal of saccade [deg]')
+linkaxes(ax(:));
+axis equal
+legend('eye','stimulus')
+saveas(gcf,fullfile(params.paths,['1d_' params.files(1:end-4) '_rmSaccades_xy.png']));
