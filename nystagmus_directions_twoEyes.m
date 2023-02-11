@@ -1,5 +1,5 @@
-function nystagmus_gabor(subject,varargin)
-% pursuit task in two dimensions
+function nystagmus_directions_twoEyes(subject,varargin)
+% two eyes receiving the same direction, specified as 'ori1List'
 %
 % Call example 
 % >>pursuit2D('TST','stimType',2,'nRepPerCond',1)
@@ -83,7 +83,7 @@ p.addParameter('phaseSpeed',4);
 p.addParameter('sigma',5);%should be radius but something is not right
 %p.addParameter('color',[0 0 .5]); 
 p.addParameter('colorPolarity',[1 1 1]); 
-p.addParameter('tPreBlank',[0 0]);
+p.addParameter('tPreBlank',0);
 
 p.parse(subject,varargin{:});
 
@@ -149,8 +149,8 @@ for ii = 1:nrConds
     
     fm{ii}.X = 0;%'@traj.X';
     fm{ii}.Y = 0;%'@traj.Y';
-    fm{ii}.on = args.tPreBlank(ii);%'@fix.stopTime';%'@traj.startTime'; % was .on
-    fm{ii}.duration = tDur - args.tPreBlank(ii);
+    fm{ii}.on = args.tPreBlank;%'@fix.stopTime';%'@traj.startTime'; % was .on
+    fm{ii}.duration = tDur - args.tPreBlank;
     fm{ii}.phaseSpeed = args.phaseSpeed;%
     fm{ii}.frequency = args.frequency;
     fm{ii}.contrast = args.contrast;
@@ -172,7 +172,7 @@ fm{2}.orientation = 0;%args.orientation(2);
 k = behaviors.keyResponse(c,'choice');
 k.from = '@gabor1.off'; % end of pursuit
 k.maximumRT= Inf;                   %Allow inf time for a response
-k.keys = {'a','z'};
+k.keys = {'z'};
 k.required = false; %   setting false means that even if this behavior is not successful (i.e. the wrong answer is given), the trial will not be repeated.
 
 %Maintain gaze on the fixation point until the dots disappear
@@ -205,8 +205,7 @@ plugins.sound(c);           %Use the sound plugin
 
 % Add correct/incorrect feedback
 s= plugins.soundFeedback(c,'soundFeedback');
-s.add('waveform','correct.wav','when','afterTrial','criterion','@choice.correct');
-s.add('waveform','incorrect.wav','when','afterTrial','criterion','@ ~choice.correct');
+s.add('waveform','ding.wav','when','afterTrial','criterion','@ choice.correct');
 
 %% Experimental design
 c.trialDuration = Inf; %'@choice.stopTime';       %End the trial as soon as the 2AFC response is made.
@@ -237,6 +236,7 @@ if ~args.debug
 else
     c.eye.doTrackerSetupEachBlock = false;
     c.cursor = 'arrow';
+    c.eye.continuous = true;
 end
 
 %% Run the experiment.

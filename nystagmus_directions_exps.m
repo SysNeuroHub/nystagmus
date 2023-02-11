@@ -1,3 +1,5 @@
+%% this is a script for running a nystagmus_directions_two(one)Eyes.m experiment
+% also run a primitive analysis
 
 deg = 0:15:180;
 

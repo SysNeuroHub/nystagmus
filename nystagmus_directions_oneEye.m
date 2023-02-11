@@ -1,5 +1,6 @@
-function nystagmus_gabor(subject,varargin)
-% pursuit task in two dimensions
+function nystagmus_directions_oneEye(subject,varargin)
+% one eye receiving (blue) the directions specified as 'ori1List'
+% the other eye (red) is fixed as 0deg
 %
 % Call example 
 % >>pursuit2D('TST','stimType',2,'nRepPerCond',1)
@@ -172,7 +173,7 @@ fm{2}.orientation = 0;%args.orientation(2);
 k = behaviors.keyResponse(c,'choice');
 k.from = '@gabor1.off'; % end of pursuit
 k.maximumRT= Inf;                   %Allow inf time for a response
-k.keys = {'a','z'};
+k.keys = {'z'};
 k.required = false; %   setting false means that even if this behavior is not successful (i.e. the wrong answer is given), the trial will not be repeated.
 
 %Maintain gaze on the fixation point until the dots disappear
@@ -206,7 +207,7 @@ plugins.sound(c);           %Use the sound plugin
 % Add correct/incorrect feedback
 s= plugins.soundFeedback(c,'soundFeedback');
 s.add('waveform','correct.wav','when','afterTrial','criterion','@choice.correct');
-s.add('waveform','incorrect.wav','when','afterTrial','criterion','@ ~choice.correct');
+%s.add('waveform','incorrect.wav','when','afterTrial','criterion','@ ~choice.correct');
 
 %% Experimental design
 c.trialDuration = Inf; %'@choice.stopTime';       %End the trial as soon as the 2AFC response is made.
