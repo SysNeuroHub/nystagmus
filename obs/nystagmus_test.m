@@ -4,7 +4,7 @@ nystagmus_gabor('TST','nRepPerCond',3,'debug',true,'tolerance',10,...
     'tDur',5000,'orientation',[0 180]);
 
 %TODO
-% - something is not right about the circle mask (square mask works)
+% FIXED- something is not right about the circle mask (square mask works)
 % DONE - superimpose red and blue gratings. multiGaborsN seems not working
 % - control timing of appearance (flash suppression)
 % - add control condition
@@ -18,4 +18,3 @@ nystagmus_gabor('TST','nRepPerCond',3,'debug',true,'tolerance',10,...
 %       > incorrect.wav > cough.wav
 % - provide sound feedback when right after the stimulus offset, not the
 % start of trial stimulus onset
-

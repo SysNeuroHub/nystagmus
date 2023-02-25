@@ -1,4 +1,5 @@
-function nystagmus_gabor(subject,varargin)
+function nystagmus_rdp_twoEyes(subject,varargin)
+% two eyes receiving the same direction, specified as 'ori1List'
 %
 % Call example 
 % >>pursuit2D('TST','stimType',2,'nRepPerCond',1)
@@ -69,20 +70,19 @@ p = inputParser();
 p.KeepUnmatched = true;
 p.addRequired('subject',@(x) validateattributes(x,{'char'},{'nonempty'}));
 p.addParameter('debug',false,@(x) validateattributes(x,{'logical'},{'scalar','nonempty'}));
-%p.addParameter('stimType',1,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'})); % 0=step-ramp; 1=single sinusoids; 2=sum-of-sinusoids
+p.addParameter('stimType',1,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'})); % 0=step-ramp; 1=single sinusoids; 2=sum-of-sinusoids
 p.addParameter('tDur',8000,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'}));  % trial duration (ms)
 p.addParameter('nRepPerCond',3,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'}));  % number of repeats of each condition
 p.addParameter('tolerance',6,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'}));  % (deg) eye tolerance - radius
 
 %for gabor patch
-p.addParameter('contrast',1);
-p.addParameter('dirList_b',[0]);
-p.addParameter('dirList_r',[0]);
-p.addParameter('frequency',.2);
-p.addParameter('speed',4);
-p.addParameter('radius',5);
-%p.addParameter('color',[0 0 .5]); 
-p.addParameter('colorPolarity',[1 1 1]); 
+% p.addParameter('contrast',1);
+p.addParameter('dir1List',[0 0]); %[deg]
+% p.addParameter('frequency',.2);
+p.addParameter('speed',4); %[deg]
+p.addParameter('radius',5);%aperture size [pix]
+% %p.addParameter('color',[0 0 .5]); 
+% p.addParameter('colorPolarity',[1 1 1]); 
 p.addParameter('tPreBlank',0);
 
 p.parse(subject,varargin{:});
@@ -135,30 +135,69 @@ tDur = args.tDur; % (ms) applies to fixation target and trajectory
 nrConds = 2;
 fm = cell(nrConds,1);
 for ii = 1:nrConds
-    stimName = ['gabor' num2str(ii)]; %gabor1: blue, gabor2: red
+    stimName = ['gabor' num2str(ii)];
     
-    % draw gabor patch
-    fm{ii} = tuning.cgabor(c,stimName); % neurostim.stimuli.gabor
-    fm{ii}.colorPolarity = args.colorPolarity;
-    fm{ii}.width = 2*max(args.radius);
-    fm{ii}.height = fm{ii}.width;
-    fm{ii}.sigma = args.radius;
-    fm{ii}.mask = 'CIRCLE';
+    % draw rdp patch
+    fm{ii} = neurostim.stimuli.rdp(c,stimName);
+    
+    %common parameters across stim
     fm{ii}.X = 0;
     fm{ii}.Y = 0;
-    fm{ii}.on = args.tPreBlank;%'@fix.stopTime';%'@traj.startTime'; % was .on
-    fm{ii}.duration = tDur - args.tPreBlank;
-    fm{ii}.phaseSpeed = args.speed;%
-    fm{ii}.frequency = args.frequency;
-    fm{ii}.contrast = args.contrast;
-    fm{ii}.flickerMode = 'none';
-    fm{ii}.flickerFrequency = 0;%args.flickerFrequency;
-    fm{ii}.square = true;
+
+    
+    %rdp specific parameters
+    fm{ii}.size = 10; %dot size [px]
+    fm{ii}.type = 0; %square dot
+    fm{ii}.maxRadius =  args.radius;%maximum radius of aperture (px)
+    fm{ii}.speed = args.speed; %dot speed (deg
+    fm{ii}.direction = 0;
+    fm{ii}.nrDots = args.nrDots;
+    fm{ii}.coherence = 1;
+    fm{ii}.motionMode = 1; %linear
+    fm{ii}.lifetime = 50;%lifetime of dots (in frames)
+    fm{ii}.dwellTime = 1;
+    fm{ii}.coordSystem = 0; %polar coordinates
+    fm{ii}.noiseMode = 0; %proportion
+    fm{ii}.noiseDist = 1; %uniform 
+    %fm{ii}.noiseWidth not used when noiseDist=1
+    %fm{ii}.truncateGauss ??
+    
+%                 o.addProperty('size',5,'validate',@isnumeric);
+%             o.addProperty('type',0,'validate',@isnumeric);            
+%             o.addProperty('maxRadius',100,'validate',@isnumeric);
+%             o.addProperty('speed',5,'validate',@isnumeric);
+%             o.addProperty('xspeed',0,'validate',@isnumeric);
+%             o.addProperty('yspeed',0,'validate',@isnumeric);
+%             o.addProperty('direction',0,'validate',@isnumeric);
+%             o.addProperty('nrDots',100,'validate',@isnumeric);
+%             o.addProperty('coherence',0.5,'validate',@(x)x<=1&&x>=0);
+%             o.addProperty('motionMode',1,'validate',@(x)x==0||x==1);      %Spiral, linear
+%             o.addProperty('lifetime',50,'validate',@isnumeric);
+%             o.addProperty('dwellTime',1,'validate',@isnumeric);
+%             o.addProperty('coordSystem',0,'validate',@(x)x==0||x==1);
+%             o.addProperty('noiseMode',0,'validate',@(x)x==0||x==1);       % coherence, distribution
+%             o.addProperty('noiseDist',0,'validate',@(x)x==0||x==1);       % gaussian, uniform
+%             o.addProperty('noiseWidth',50,'validate',@isnumeric);
+%             o.addProperty('truncateGauss',-1,'validate',@isnumeric);
+
+%     fm{ii} = tuning.cgabor(c,stimName); % neurostim.stimuli.gabor
+%     fm{ii}.colorPolarity = args.colorPolarity;
+%     fm{ii}.width = 2*max(args.sigma); %WEIRDLY SMALL ON SCREEN
+%     fm{ii}.height = fm{ii}.width;
+%     fm{ii}.mask = 'SQUARE';%'CIRCLE';%    
+%     fm{ii}.X = 0;%'@traj.X';
+%     fm{ii}.Y = 0;%'@traj.Y';
+%     fm{ii}.on = args.tPreBlank;%'@fix.stopTime';%'@traj.startTime'; % was .on
+%     fm{ii}.duration = tDur - args.tPreBlank;
+%     fm{ii}.phaseSpeed = args.phaseSpeed;%
+%     fm{ii}.frequency = args.frequency;
+%     fm{ii}.contrast = args.contrast;
+%     fm{ii}.flickerMode = 'none';
+%     fm{ii}.flickerFrequency = 0;%args.flickerFrequency;
+%     fm{ii}.square = true;
 end
 fm{1}.color = [0 0 1 .5];
 fm{2}.color = [1 0 0 .5];
-fm{1}.orientation = 0;%args.orientation(1);
-fm{2}.orientation = 0;%args.orientation(2);
     
 %% ========== Add required behaviours =========
 %Subject's 2AFC response
@@ -188,6 +227,8 @@ stopLog(c.gabor2.prms.X);
 stopLog(c.gabor2.prms.Y);
 stopLog(c.f1.prms.X);
 stopLog(c.f1.prms.Y);
+%c.traj.setChangesInTrial('X');%?
+%c.traj.setChangesInTrial('Y');%?
 
 
 %% ========== Specify feedback/rewards ========= 
@@ -208,14 +249,11 @@ k.successEndsTrial  = true; %false;
 myDesign=design('myFac');                      %Type "help neurostim/design" for more options.
 
 
-facOutList = {'orientation'}; % frequency = spatial frequency
-facInList = {'dirList_b'};
+facOutList = {'direction'}; % frequency = spatial frequency
+facInList = {'dir1List'};
 for a = 1:length(facInList)
-    myDesign.(sprintf('fac%d',a)).gabor1.(facOutList{a}) = args.(facInList{a})-90;
-end
-facInList = {'dirList_r'};
-for a = 1:length(facInList)
-    myDesign.(sprintf('fac%d',a)).gabor2.(facOutList{a}) = args.(facInList{a})-90;
+    myDesign.(sprintf('fac%d',a)).gabor1.(facOutList{a}) = args.(facInList{a});
+    myDesign.(sprintf('fac%d',a)).gabor2.(facOutList{a}) = args.(facInList{a});
 end
 
 myDesign.retry = 'RANDOM'; %'IMMEDIATE' or 'IGNORE';

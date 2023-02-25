@@ -1,9 +1,10 @@
-function nystagmus_directions_oneEye(subject,varargin)
-% one eye receiving (blue) the directions specified as 'ori1List'
-% the other eye (red) is fixed as 0deg
+function nystagmus_gabor(subject,varargin)
+% nystagmus rivaly
 %
+% 2022 Aug DS created from pursuit2D
+% 
 % Call example 
-% >>pursuit2D('TST','stimType',2,'nRepPerCond',1)
+% >>nystagmus_gabor('TST','nRepPerCond',1,'tolerance',10,'tDur',2e4);
 % Will run subject named TST
 % 
 % After paradigm starts:
@@ -15,7 +16,7 @@ function nystagmus_directions_oneEye(subject,varargin)
 % end)
 % - Press Esc (twice) when you're ready to start protocol. 
 % - Press F8 during task to recalibrate eyetracker
-% - Press 'a' or 'z' to start a new trial
+% - Press 'z' to start a new trial
 %
 %   *********** Press "Esc" twice to exit a running experiment ************
 %
@@ -33,10 +34,6 @@ function nystagmus_directions_oneEye(subject,varargin)
 % a third stimulus function - targXY.m - whose only role is to update the
 % XY position. 
 % - movement starts at pre-defined time after fixation is acquired
-%
-% STIM-TYPE SELECTION
-% 1 - sinusoids with 3 frequencies (horizontal, vertical, diagonal and circular)
-% 2 - sum-of-sinusoids - 15 unique conditions in 2D
 %
 % Also 
 % - restart Matlab before you collect data in a new session. 
@@ -71,20 +68,20 @@ p = inputParser();
 p.KeepUnmatched = true;
 p.addRequired('subject',@(x) validateattributes(x,{'char'},{'nonempty'}));
 p.addParameter('debug',false,@(x) validateattributes(x,{'logical'},{'scalar','nonempty'}));
-p.addParameter('stimType',1,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'})); % 0=step-ramp; 1=single sinusoids; 2=sum-of-sinusoids
+%p.addParameter('stimType',1,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'})); % 0=step-ramp; 1=single sinusoids; 2=sum-of-sinusoids
 p.addParameter('tDur',8000,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'}));  % trial duration (ms)
 p.addParameter('nRepPerCond',3,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'}));  % number of repeats of each condition
 p.addParameter('tolerance',6,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'}));  % (deg) eye tolerance - radius
 
 %for gabor patch
 p.addParameter('contrast',1);
-p.addParameter('ori1List',[0 0]);
+p.addParameter('orientation',[0 0]);
 p.addParameter('frequency',.2);
 p.addParameter('phaseSpeed',4);
 p.addParameter('sigma',5);%should be radius but something is not right
 %p.addParameter('color',[0 0 .5]); 
 p.addParameter('colorPolarity',[1 1 1]); 
-p.addParameter('tPreBlank',[0 0]);
+p.addParameter('tPreBlank',0);
 
 p.parse(subject,varargin{:});
 
@@ -100,9 +97,9 @@ commandwindow;
 if ~args.debug
     c = marmolab.rigcfg('debug',args.debug, p.Unmatched); % set to false to save githash at start of each experiment!
 else
-    c = dsOffice('smallWindow',true);
+    c = dsOffice('smallWindow',true); %in dsbox 
 end
-c.paradigm = 'pursuit2D';
+c.paradigm = 'pursuit2D'; %TOBE FIXED
 
 % if ~args.debug % log git hash
 %   hash = marmolab.getGitHash(fileparts(mfilename('fullpath')));
@@ -113,7 +110,7 @@ c.paradigm = 'pursuit2D';
 if isempty(c.pluginsByClass('eyetracker')) 
     e = neurostim.plugins.eyetracker(c);      %Eye tracker plugin not yet added, so use the virtual one. Mouse is used to control gaze position (click)
     e.useMouse = true;   
- end
+end
 
 
 %% ============== Add stimuli ==================
@@ -131,7 +128,7 @@ f.Y = 0;%'@traj.Y';
 % draw moving fixation target
 tDur = args.tDur; % (ms) applies to fixation target and trajectory
 
-%c.addProperty('tPreBlank',args.tPreBlank);
+ c.addProperty('tPreBlank',args.tPreBlank);
 
 nrConds = 2;
 fm = cell(nrConds,1);
@@ -148,26 +145,24 @@ for ii = 1:nrConds
     fm{ii}.height = fm{ii}.width;
     fm{ii}.mask = 'SQUARE';%'CIRCLE';%
     
-    fm{ii}.X = 0;%'@traj.X';
-    fm{ii}.Y = 0;%'@traj.Y';
-    fm{ii}.on = args.tPreBlank(ii);%'@fix.stopTime';%'@traj.startTime'; % was .on
-    fm{ii}.duration = tDur - args.tPreBlank(ii);
+    fm{ii}.X = 0;
+    fm{ii}.Y = 0;
+    fm{ii}.addProperty('tPreBlank', args.tPreBlank);    
+    fm{ii}.duration = tDur - args.tPreBlank; %TO BE REPLACED WITH c.trialDuration
     fm{ii}.phaseSpeed = args.phaseSpeed;%
     fm{ii}.frequency = args.frequency;
     fm{ii}.contrast = args.contrast;
-    %fm{ii}.spd = args.spd;
     fm{ii}.flickerMode = 'none';
     fm{ii}.flickerFrequency = 0;%args.flickerFrequency;
     fm{ii}.square = true;
-    %fm.multiGaborsOriOffset = [0 90];
-    %fm.multiGaborsN = 2;
-    %fm.multiGaborsOriRand = false;
 end
 fm{1}.color = [0 0 1 .5];
 fm{2}.color = [1 0 0 .5];
-fm{1}.orientation = 0;%args.orientation(1);
-fm{2}.orientation = 0;%args.orientation(2);
-    
+fm{1}.orientation = args.orientation(1);
+fm{2}.orientation = args.orientation(2);
+%fm{1}.on = '@fix.stopTime + gabor1.tPreBlank';
+%fm{2}.on = '@fix.stopTime + gabor2.tPreBlank';
+        
 %% ========== Add required behaviours =========
 %Subject's 2AFC response
 k = behaviors.keyResponse(c,'choice');
@@ -206,8 +201,10 @@ plugins.sound(c);           %Use the sound plugin
 
 % Add correct/incorrect feedback
 s= plugins.soundFeedback(c,'soundFeedback');
-s.add('waveform','correct.wav','when','afterTrial','criterion','@choice.correct');
-%s.add('waveform','incorrect.wav','when','afterTrial','criterion','@ ~choice.correct');
+s.add('waveform','ding.wav','when','afterTrial','criterion','@ choice.correct');
+%s.add('waveform','cough.wav','when','afterTrial','criterion','@ ~choice.correct');
+% s.add('waveform','correct.wav','when','afterTrial','criterion','@choice.correct');
+% s.add('waveform','incorrect.wav','when','afterTrial','criterion','@ ~choice.correct');
 
 %% Experimental design
 c.trialDuration = Inf; %'@choice.stopTime';       %End the trial as soon as the 2AFC response is made.
@@ -218,12 +215,20 @@ k.successEndsTrial  = true; %false;
 % For threshold estimation, we'd just vary speed
 myDesign=design('myFac');                      %Type "help neurostim/design" for more options.
 
+%% factorization
+facOutList = {'on'}; % frequency = spatial frequency
+facInList = {'tPreBlank'};%omitted sigma
 
-facOutList = {'orientation'}; % frequency = spatial frequency
-facInList = {'ori1List'};
+%produces 2 x 2 conditions
 for a = 1:length(facInList)
-    myDesign.(sprintf('fac%d',a)).gabor1.(facOutList{a}) = args.(facInList{a});
+    myDesign.(sprintf('fac%d',1)).gabor1.(facOutList{a}) = args.(facInList{a});
+    myDesign.(sprintf('fac%d',2)).gabor2.(facOutList{a}) = args.(facInList{a});
 end
+
+% for a = 1:length(facInList)
+%     myDesign.(sprintf('fac%d',1)).gabor1.(facOutList{a}) = '@fix.stopTime + cic.tPreBlank';
+%     myDesign.(sprintf('fac%d',2)).gabor2.(facOutList{a}) = '@fix.stopTime + cic.tPreBlank';
+% end
 
 myDesign.retry = 'RANDOM'; %'IMMEDIATE' or 'IGNORE';
 myDesign.maxRetry = 10;  % Each condition will be retried up to this many times. 
@@ -236,6 +241,9 @@ if ~args.debug
     c.eye.doTrackerSetupEachBlock = true;
 else
     c.eye.doTrackerSetupEachBlock = false;
+    c.eye.continuous = true; 
+    %if true, eye position is always the position of cursor
+    %if false, eye position is not registered until clicking
     c.cursor = 'arrow';
 end
 

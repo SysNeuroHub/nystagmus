@@ -145,8 +145,7 @@ for ii = 1:nrConds
     % fm.mask = 'GAUSS';
     fm{ii}.width = 2*max(args.sigma); %WEIRDLY SMALL ON SCREEN
     fm{ii}.height = fm{ii}.width;
-    fm{ii}.mask = 'SQUARE';%'CIRCLE';%
-    
+    fm{ii}.mask = 'SQUARE';%'CIRCLE';%    
     fm{ii}.X = 0;%'@traj.X';
     fm{ii}.Y = 0;%'@traj.Y';
     fm{ii}.on = args.tPreBlank;%'@fix.stopTime';%'@traj.startTime'; % was .on

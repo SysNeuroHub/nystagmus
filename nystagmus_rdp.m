@@ -1,4 +1,5 @@
-function nystagmus_gabor(subject,varargin)
+function nystagmus_rdp(subject,varargin)
+% two eyes receiving the same direction, specified as 'ori1List'
 %
 % Call example 
 % >>pursuit2D('TST','stimType',2,'nRepPerCond',1)
@@ -75,14 +76,13 @@ p.addParameter('nRepPerCond',3,@(x) validateattributes(x,{'numeric'},{'scalar','
 p.addParameter('tolerance',6,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'}));  % (deg) eye tolerance - radius
 
 %for gabor patch
-p.addParameter('contrast',1);
-p.addParameter('dirList_b',[0]);
-p.addParameter('dirList_r',[0]);
-p.addParameter('frequency',.2);
-p.addParameter('speed',4);
-p.addParameter('radius',5);
-%p.addParameter('color',[0 0 .5]); 
-p.addParameter('colorPolarity',[1 1 1]); 
+p.addParameter('dir1List_r',[0]); %direction(s) of red dots [deg] 0: left to right, 90: bottom to top
+p.addParameter('dir1List_b',[0]); %direction(s) of blue dots [deg]
+p.addParameter('speed',4); %[deg]
+p.addParameter('radius',5); %aperture size [pix]
+p.addParameter('dotSize',5); %dot size [pix]
+p.addParameter('nrDots',30); %number of dots
+p.addParameter('coherence',1);
 p.addParameter('tPreBlank',0);
 
 p.parse(subject,varargin{:});
@@ -132,38 +132,51 @@ tDur = args.tDur; % (ms) applies to fixation target and trajectory
 
 %c.addProperty('tPreBlank',args.tPreBlank);
 
+s = RandStream('mt19937ar');
+
 nrConds = 2;
 fm = cell(nrConds,1);
 for ii = 1:nrConds
-    stimName = ['gabor' num2str(ii)]; %gabor1: blue, gabor2: red
     
-    % draw gabor patch
-    fm{ii} = tuning.cgabor(c,stimName); % neurostim.stimuli.gabor
-    fm{ii}.colorPolarity = args.colorPolarity;
-    fm{ii}.width = 2*max(args.radius);
-    fm{ii}.height = fm{ii}.width;
-    fm{ii}.sigma = args.radius;
-    fm{ii}.mask = 'CIRCLE';
+    reset(s, 1);%args.rngSeed);
+
+    stimName = ['patch' num2str(ii)];
+    %patch1: blue dots, patch2: red dots
+    
+    % draw rdp patch
+    fm{ii} = neurostim.stimuli.rdp(c,stimName);
+    
+    %common parameters across stim
     fm{ii}.X = 0;
     fm{ii}.Y = 0;
-    fm{ii}.on = args.tPreBlank;%'@fix.stopTime';%'@traj.startTime'; % was .on
-    fm{ii}.duration = tDur - args.tPreBlank;
-    fm{ii}.phaseSpeed = args.speed;%
-    fm{ii}.frequency = args.frequency;
-    fm{ii}.contrast = args.contrast;
-    fm{ii}.flickerMode = 'none';
-    fm{ii}.flickerFrequency = 0;%args.flickerFrequency;
-    fm{ii}.square = true;
+
+    
+    %rdp specific parameters
+    fm{ii}.size = args.dotSize; %dot size [px]
+    fm{ii}.type = 0; %square dot
+    fm{ii}.maxRadius =  args.radius;%maximum radius of aperture (px)
+    fm{ii}.speed = args.speed; %dot speed (deg
+    fm{ii}.direction = 0;
+    fm{ii}.nrDots = args.nrDots;
+    fm{ii}.coherence = 0.7; %dot coherence [0-1]
+    fm{ii}.motionMode = 1; %linear
+    fm{ii}.lifetime = 50;%lifetime of dots (in frames)
+    fm{ii}.dwellTime = 1;
+    fm{ii}.coordSystem = 0; %polar coordinates
+    fm{ii}.noiseMode = 0; %proportion
+    fm{ii}.noiseDist = 1; %uniform 
+    fm{ii}.rngSeed = 1;
+    %fm{ii}.noiseWidth not used when noiseDist=1
+    %fm{ii}.truncateGauss ??
+    
 end
-fm{1}.color = [0 0 1 .5];
-fm{2}.color = [1 0 0 .5];
-fm{1}.orientation = 0;%args.orientation(1);
-fm{2}.orientation = 0;%args.orientation(2);
+fm{1}.color = [0 0 1 .5]; %blue
+fm{2}.color = [1 0 0 .5]; %red
     
 %% ========== Add required behaviours =========
 %Subject's 2AFC response
 k = behaviors.keyResponse(c,'choice');
-k.from = '@gabor1.off'; % end of pursuit
+k.from = '@patch1.off'; % end of pursuit
 k.maximumRT= Inf;                   %Allow inf time for a response
 k.keys = {'z'};
 k.required = false; %   setting false means that even if this behavior is not successful (i.e. the wrong answer is given), the trial will not be repeated.
@@ -171,9 +184,9 @@ k.required = false; %   setting false means that even if this behavior is not su
 %Maintain gaze on the fixation point until the dots disappear
 g = behaviors.fixate(c,'f1');
 g.from = 5000; % If fixation has not started at this time, move to the next trial
-g.to = '@gabor1.off'; % stop tracking when trajectory ends
-g.X = '@gabor1.X';
-g.Y = '@gabor1.Y';
+g.to = '@patch1.off'; % stop tracking when trajectory ends
+g.X = '@patch1.X';
+g.Y = '@patch1.Y';
 g.tolerance = args.tolerance; % (deg) allowed eye position error - should be aiming to get this as small as possible
 g.required = true; % This is a required behavior. Any trial in which fixation is not maintained throughout will be retried. (See myDesign.retry below)
 g.failEndsTrial = true; 
@@ -182,12 +195,14 @@ g.failEndsTrial = true;
 %% Turn off logging
 stopLog(c.fix.prms.X);
 stopLog(c.fix.prms.Y);
-stopLog(c.gabor1.prms.X);
-stopLog(c.gabor1.prms.Y);
-stopLog(c.gabor2.prms.X);
-stopLog(c.gabor2.prms.Y);
+stopLog(c.patch1.prms.X);
+stopLog(c.patch1.prms.Y);
+stopLog(c.patch2.prms.X);
+stopLog(c.patch2.prms.Y);
 stopLog(c.f1.prms.X);
 stopLog(c.f1.prms.Y);
+%c.traj.setChangesInTrial('X');%?
+%c.traj.setChangesInTrial('Y');%?
 
 
 %% ========== Specify feedback/rewards ========= 
@@ -208,14 +223,14 @@ k.successEndsTrial  = true; %false;
 myDesign=design('myFac');                      %Type "help neurostim/design" for more options.
 
 
-facOutList = {'orientation'}; % frequency = spatial frequency
-facInList = {'dirList_b'};
+facOutList = {'direction'}; % frequency = spatial frequency
+facInList = {'dir1List_b'};
 for a = 1:length(facInList)
-    myDesign.(sprintf('fac%d',a)).gabor1.(facOutList{a}) = args.(facInList{a})-90;
+    myDesign.(sprintf('fac%d',a)).patch1.(facOutList{a}) = args.(facInList{a});
 end
-facInList = {'dirList_r'};
+facInList = {'dir1List_r'};
 for a = 1:length(facInList)
-    myDesign.(sprintf('fac%d',a)).gabor2.(facOutList{a}) = args.(facInList{a})-90;
+    myDesign.(sprintf('fac%d',a)).patch2.(facOutList{a}) = args.(facInList{a});
 end
 
 myDesign.retry = 'RANDOM'; %'IMMEDIATE' or 'IGNORE';
