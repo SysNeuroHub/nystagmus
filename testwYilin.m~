@@ -14,7 +14,7 @@ nystagmus_gabor('oneEye','speed',10, 'dirList_b',90,'dirList_r',deg, ...
 %params.files = 'twoEyes.pursuit2D.113116.mat';
 %params.files = 'oneEye.pursuit2D.113617.mat';
 params.paths = '/home/marmolab/data/2023/03/02';
-params.files = 'oneEye.pursuit2D.134927.mat';
+params.files = 'oneEye.pursuit2D.132140.mat';
 
 d = marmodata.mdbase('path',params.paths,'file',params.files,'loadArgs',{'loadEye',true});
 
