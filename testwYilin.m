@@ -1,0 +1,6 @@
+deg = 0:15:180;
+nystagmus_gabor('oneEye','speed',10, 'dirList_b',0,'dirList_r',deg, ...
+     'nRepPerCond',1, 'radius',5, 'frequency',.5,'tDur',1e4);
+ 
+ nystagmus_rdp('oneEye','speed',10, 'dirList_b',0,'dirList_r',deg, ...
+     'nRepPerCond',1, 'radius',5, 'tDur',1e4);

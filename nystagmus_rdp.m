@@ -76,8 +76,8 @@ p.addParameter('nRepPerCond',3,@(x) validateattributes(x,{'numeric'},{'scalar','
 p.addParameter('tolerance',6,@(x) validateattributes(x,{'numeric'},{'scalar','nonempty'}));  % (deg) eye tolerance - radius
 
 %for gabor patch
-p.addParameter('dir1List_r',[0]); %direction(s) of red dots [deg] 0: left to right, 90: bottom to top
-p.addParameter('dir1List_b',[0]); %direction(s) of blue dots [deg]
+p.addParameter('dirList_r',[0]); %direction(s) of red dots [deg] 0: left to right, 90: bottom to top
+p.addParameter('dirList_b',[0]); %direction(s) of blue dots [deg]
 p.addParameter('speed',4); %[deg]
 p.addParameter('radius',5); %aperture size [pix]
 p.addParameter('dotSize',5); %dot size [pix]
@@ -224,11 +224,11 @@ myDesign=design('myFac');                      %Type "help neurostim/design" for
 
 
 facOutList = {'direction'}; % frequency = spatial frequency
-facInList = {'dir1List_b'};
+facInList = {'dirList_b'};
 for a = 1:length(facInList)
     myDesign.(sprintf('fac%d',a)).patch1.(facOutList{a}) = args.(facInList{a});
 end
-facInList = {'dir1List_r'};
+facInList = {'dirList_r'};
 for a = 1:length(facInList)
     myDesign.(sprintf('fac%d',a)).patch2.(facOutList{a}) = args.(facInList{a});
 end
